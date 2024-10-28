@@ -1,0 +1,11 @@
+hbp-validation-framework
+ebrains-kg-core
+fairgraph
+sciunit
+nilsimsa
+argparse
+comment-parser
+brian2
+# pyinterval ## Requires deprecated distutils -- Remove ?
+fooof
+# cereb-nest

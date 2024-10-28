@@ -1,0 +1,187 @@
+# ====== SPACK ======= #
+# Build stage with Spack pre-installed and ready to be used
+FROM spack/ubuntu-jammy:develop AS builder
+
+# What we want to install and how we want to install it
+# is specified in a manifest file (spack.yaml)
+COPY ./spack.yaml /opt/spack-environment/spack.yaml
+
+# Get the additional EBRAINS package definitions
+# TODO: here we get the main branch, we may wish to use a release tag
+RUN git clone https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds.git /opt/ebrains-spack-builds
+
+# Install the software, remove unnecessary deps
+RUN cd /opt/spack-environment && spack repo add /opt/ebrains-spack-builds && spack env activate . && spack install --fail-fast && spack gc -y
+
+# Strip all the binaries
+RUN find -L /opt/views/view/* -type f -exec readlink -f '{}' \; | \
+    xargs file -i | \
+    grep 'charset=binary' | \
+    grep 'x-executable\|x-archive\|x-sharedlib' | \
+    awk -F: '{print $1}' | xargs strip
+
+# Modifications to the environment that are necessary to run
+RUN cd /opt/spack-environment && \
+    spack env activate --sh -d . > activate.sh
+
+# # Install Cereb-nest
+# # TODO
+# RUN git clone https://github.com/marcobiasizzo/cereb-nest.git
+# # ENV NEST_INSTALL_DIR=/opt/software/linux-ubuntu22.04-skylake/gcc-11.4.0/nest-2.20.2-3lcclc2yuqamijhytwm2dm3n3xxh6yhq
+# ENV NEST_INSTALL_DIR=/opt/views/view/
+# RUN cd cereb-nest && \
+#     git checkout nest2.20.2_python3.8 && \
+#     mkdir build && \
+#     cd build && \
+#     cmake -Dwith-nest=${NEST_INSTALL_DIR}/bin/nest-config -DCMAKE_INSTALL_PREFIX=/opt/views/view .. && \
+#     make && \
+#     make install
+
+# ====== Model-Runner ======= #
+FROM ubuntu:jammy AS model-runner
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Kiev
+EXPOSE 667
+
+# Set default shell
+SHELL ["/bin/bash", "-c"]
+
+# Set timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+ARG GITLAB_DEPLOYED_USR
+ARG GITLAB_DEPLOYED_PASSWORD
+
+# Update system and install requirements
+COPY apt_requirements.txt apt_requirements.txt
+RUN apt-get -y update && apt-get -y upgrade;\
+    apt-get -y install software-properties-common;\
+    add-apt-repository universe;\
+    apt-get -y update;\
+    xargs apt-get -y install < apt_requirements.txt
+
+
+# Copy tools from SPACK
+COPY --from=builder /opt/spack-environment /opt/spack-environment
+COPY --from=builder /opt/software /opt/software
+COPY --from=builder /opt/views /opt/views
+# COPY --from=builder /opt/spack /opt/spack
+
+RUN chmod +x /opt/spack-environment/activate.sh && /opt/spack-environment/activate.sh
+ENV PATH="/usr/src/app:$PATH"
+
+
+
+# Install CMake 3.27.6 from script 
+# RUN wget -N https://github.com/Kitware/CMake/releases/download/v3.27.6/cmake-3.27.6-linux-x86_64.sh
+# RUN chmod +x cmake-3.27.6-linux-x86_64.sh
+# RUN ./cmake-3.27.6-linux-x86_64.sh --include-subdir --skip-license --prefix="/"
+# ENV PATH="/cmake-3.27.6-linux-x86_64/bin:${PATH}"
+# ENV LD_LIBRARY_PATH="/cmake-3.27.6-linux-x86_64/lib:${LD_LIBRARY_PATH}"
+
+# Archiver
+RUN wget -N https://github.com/mholt/archiver/releases/download/v3.5.0/arc_3.5.0_linux_amd64
+RUN chmod a+x arc_*
+RUN mkdir -p /usr/local/bin
+RUN mv arc_* /usr/local/bin/arc
+
+# Set Python Virtual Environment
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
+
+# Install BGmodel
+# TODO
+
+# Install HDF5-1.14.2
+# RUN wget -N https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.14/hdf5-1.14.2/src/CMake-hdf5-1.14.2.tar.gz
+# RUN gzip -cd CMake-hdf5-1.14.2.tar.gz| tar xvf -
+# RUN cd CMake-hdf5-1.14.2;\
+#     ./build-unix.sh;\
+#     ./HDF5-1.14.2-Linux.sh --include-subdir --skip-license --prefix="/";
+# ENV PATH=/HDF5-1.14.2-Linux/HDF_Group/HDF5/1.14.2/bin:${PATH}
+# ENV LD_LIBRARY_PATH=/HDF5-1.14.2-Linux/HDF_Group/HDF5/1.14.2/lib:${LD_LIBRARY_PATH}
+
+
+# Install NEST 3.6
+# RUN wget -N https://github.com/nest/nest-simulator/archive/refs/tags/v3.6.tar.gz
+# RUN tar -xvf v3.6.tar.gz
+# RUN cd nest-simulator-3.6;\
+#     mkdir -p build; cd build;\
+#     cmake -DCMAKE_INSTALL_PREFIX="/nest-simulator-3.6" -Dwith-mpi=ON -Dwith-openmp=ON -Dwith-python=ON -Dwith-hdf5=ON ..;\
+#     make -j4; make install;
+# RUN cp /nest-simulator-3.6/bin/nest_vars.sh /etc/profile.d
+# ENV PATH="/nest-simulator-3.6/bin:${PATH}"
+# ENV LD_LIBRARY_PATH="/nest-simulator-3.6/lib:${LD_LIBRARY_PATH}"
+# RUN source /nest-simulator-3.6/bin/nest_vars.sh
+# ENV PYTHONPATH="/nest-simulator-3.6/lib/python3.8/site-packages:${PYTHONPATH}"
+
+
+# # Install EBRAINS Metadata Downloader
+# # Download Metadata
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_download_metadata.git
+# RUN chmod +x /ebrains_download_metadata/hbp_cwl_input_downloader
+# ENV PATH="/ebrains_download_metadata:${PATH}"
+
+# # Install HBP Data Downloader
+# # Download Data: code, input and output
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_data_downloader.git
+# RUN chmod +x /ebrains_data_downloader/hbp_download_data
+# ENV PATH="/ebrains_data_downloader:${PATH}"
+
+# # Install HBP Script Generator
+# # Generates code, inputs, outputs and env
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_script_generator.git
+# RUN chmod +x /ebrains_script_generator/script_generator
+# ENV PATH="/ebrains_script_generator:${PATH}"
+
+# # Install HBP Documentation Checker
+# # Verification Method to analyze documentation
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_method_documentation.git
+# RUN chmod +x /ebrains_method_documentation/documentation_check
+# ENV PATH="/ebrains_method_documentation:${PATH}"
+
+# # Install HBP Decision Maker
+# # Computes final decision/proposition/advices/main score
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_decision_maker.git
+# RUN chmod +x /ebrains_decision_maker/decision_maker
+# ENV PATH="/ebrains_decision_maker:${PATH}"
+
+# # Install HBP Watchdog extractor
+# # TODO
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_extract_watchdog.git
+# RUN chmod +x /ebrains_extract_watchdog/hbp_extract_watchdog
+# ENV PATH="/ebrains_extract_watchdog:${PATH}"
+
+
+# # Install file-comparison-methods from GIT repo
+# # Result comparison
+# RUN pip3 install python-Levenshtein
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_file_comparison.git
+# RUN chmod +x /ebrains_file_comparison/file_compare
+# ENV PATH="/ebrains_file_comparison:${PATH}"
+
+# Install CLOC to count code comments for documentation check
+# RUN git clone https://github.com/AlDanial/cloc /opt/
+# ENV CLOCSCRIPT="/opt/cloc/cloc"
+
+            # Install kg-core-python from GIT repo
+            # RUN git clone https://github.com/HumanBrainProject/kg-core-python.git
+            # RUN pip3 install -e kg-core-python
+
+            #CMD echo HBP_USER=${HBP_USER};\
+            #    echo WORKDIR=${WORKDIR};\
+            #    echo HBP_AUTH_TOKEN=${HBP_AUTH_TOKEN};\
+            #    echo HBP_INSTANCE_ID=${HBP_INSTANCE_ID};\
+            #    # Download and run Model instance
+            #    python3 /check_model/check_model-kgv2.py;\
+            #    echo WATCHDOG_PID=${WATCHDOG_PID};\
+            #    chmod +x $WORKDIR/run_me.sh;\
+            #    watchmedo shell-command --command='echo "${watch_src_path} ${watch_dest_path}" >> watchdog_log.txt' --patterns="*" --ignore-patterns="watchdog_log.txt" --ignore-directories --recursive ${WORKDIR} & WATCHDOG_PID=$!;\
+            #    echo "Waiting for WATCHDOG_PID=${WATCHDOG_PID}";\
+
+            #    /$WORKDIR/run_me.sh;\
+
+                # File Comparison Methods test
+                # python3 /file_comparison/test-file-comparison-methods.py --nilsimsa /root/.bashrc /etc/profile;

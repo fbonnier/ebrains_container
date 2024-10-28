@@ -1,0 +1,160 @@
+FROM ubuntu:20.04
+
+
+ENV TZ=Europe/Kiev
+
+EXPOSE 667
+
+# Set default shell
+SHELL ["/bin/bash", "-c"]
+
+# Set timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Update system and install requirements
+RUN apt-get -y update;\
+    apt-get install -y software-properties-common;\
+    add-apt-repository universe;\
+    apt-get -y update;\
+    apt-get install -y\
+    python3-dev \
+    python3-pip \
+    cython3\
+    wget git\
+    libgsl-dev\
+    #libopenmpi-dev openmpi-bin\
+    #libblas-dev liblapack-dev\
+    #cmake\
+    #vim\
+    libyaml-dev;
+
+# Set Python Environment
+RUN pip3 --default-timeout=1000 install \
+    numpy \
+    neo \
+    h5py \
+    brian2 \
+    fuzzywuzzy \
+    nilsimsa \
+    argparse \
+    argh \
+    pyyaml\
+    watchdog\
+    pipenv\
+    pygit\
+    pygithub
+
+################################################################################
+### EBRAINS Tools: https://wiki.ebrains.eu/bin/view/Collabs/documentation/tools-and-services-documentation/
+### https://wiki.ebrains.eu/bin/view/Collabs/documentation/tools-and-services-documentation/
+
+## Find Data
+# fairgraph
+RUN pip3 install fairgraph
+
+## Data Analysis
+# Elephant
+RUN pip3 install elephant
+
+# HBP-Validation-Framework
+RUN pip3 install hbp-validation-framework
+
+# Neo
+RUN pip3 install neo
+
+## Simulation
+# Arbor
+RUN pip3 install arbor
+
+# BluePyMM
+RUN pip3 install bluepymm
+
+# BluePyOpt
+RUN pip3 install bluepyopt
+
+# CoreNeuron
+# TODO
+# TVB-Nest
+# TODO
+
+# NEST
+RUN wget -N https://github.com/nest/nest-simulator/archive/v2.20.0.tar.gz
+RUN tar -xvf v2.20.0.tar.gz
+RUN cd nest-simulator-2.20.0;\
+    mkdir -p build; cd build;\
+    cmake -DCMAKE_INSTALL_PREFIX="/opt/nest-simulator-2.20.0/" -Dwith-mpi=ON -Dwith-openmp=ON -Dwith-python=ON ..;\
+    make -j4; make install;
+RUN cp /opt/nest-simulator-2.20.0/bin/nest_vars.sh /etc/profile.d
+
+# NESTML
+# TODO
+
+# NEURON
+RUN pip3 install neuron
+
+# NeuroM
+# TODO
+# PyNN
+# TODO
+# TVP image processing pipeline
+# TODO
+# TVP HPC
+# TODO
+# The Virtual Brain
+# TODO
+
+## Neurobotics
+# Neurobotics Platform
+
+## HPC
+# Unicore
+# TODO
+
+#############################################################################################################
+
+# Archiver
+RUN wget -N https://github.com/mholt/archiver/releases/download/v3.5.0/arc_3.5.0_linux_amd64
+RUN chmod a+x arc_*
+RUN mkdir -p /usr/local/bin
+RUN mv arc_* /usr/local/bin/arc
+
+
+
+# Install file-comparison-methods from GIT repo
+RUN pip3 install python-Levenshtein
+RUN git clone https://github.com/fbonnier/file_comparison.git
+RUN pip3 install -e file_comparison
+
+# Install kg-core-python from GIT repo
+RUN git clone https://github.com/HumanBrainProject/kg-core-python.git
+RUN pip3 install -e kg-core-python
+
+# Install check-model from GIT repo
+# TODO
+RUN git clone https://github.com/fbonnier/check_model.git
+RUN pip3 install -e check_model
+
+
+# Run the check_model program that download and run code, download results and compare results
+# 1. Run check_model that login to EBRAINS, runs the model's instance code
+# CMD python3 /check_model/main.py
+
+CMD echo HBP_USER=$HBP_USER;\
+    # echo HBP_PASSWORD=$HBP_PASSWORD;\
+    echo WORKDIR=$WORKDIR;\
+    echo HBP_AUTH_TOKEN=$HBP_AUTH_TOKEN;\
+    echo HBP_INSTANCE_ID=$HBP_INSTANCE_ID;\
+    echo KG_VERSION=$KG_VERSION;\
+    # Download and run Model instance
+    python3 /check_model/main.py;\
+    # echo WATCHDOG_PID=$WATCHDOG_PID;\
+    chmod +x $WORKDIR/run_me.sh;\
+    watchmedo shell-command --command='echo "${watch_src_path} ${watch_dest_path}" >> watchdog_log.txt' --patterns="*" --ignore-patterns="watchdog_log.txt" --ignore-directories --recursive ${WORKDIR} & WATCHDOG_PID=$!;\
+    echo "Waiting for WATCHDOG_PID=${WATCHDOG_PID}";\
+    /$WORKDIR/run_me.sh;\
+    kill --signal 9 "${WATCHDOG_PID}";\
+    # File Comparison Methods test
+    # Step 01: Find a bijective relation between produced files and expected ones
+    python3 /file_comparison/test-file-comparison-methods.py --bijective --hex=1 $WATCHDOG_PID/list_results.txt ./watchdog_log.txt;\
+    # Step 02: Compare files
+    python3 /file_comparison/test-file-comparison-methods.py --nilsimsa --buffersize=32 ./list1.txt ./list2.txt;
