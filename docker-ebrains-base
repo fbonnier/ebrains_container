@@ -41,8 +41,8 @@ SHELL ["/bin/bash", "-c"]
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-ARG GITLAB_DEPLOYED_USR
-ARG GITLAB_DEPLOYED_PASSWORD
+# ARG GITLAB_DEPLOYED_USR
+# ARG GITLAB_DEPLOYED_PASSWORD
 
 
 # Update system and install requirements
@@ -86,8 +86,7 @@ RUN mv arc_* /usr/local/bin/arc
 
 # Set Python Virtual Environment
 COPY requirements.txt requirements.txt
-# RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Datalad EBRAINS Extension
@@ -96,37 +95,43 @@ RUN pip install git+https://github.com/datalad/datalad-ebrains.git
 
 # Install EBRAINS Metadata Downloader
 # Download Metadata
-RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_download_metadata.git
-RUN chmod +x /ebrains_download_metadata/hbp_cwl_input_downloader
-ENV PATH="/ebrains_download_metadata:${PATH}"
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_download_metadata.git
+RUN git clone https://github.com/fbonnier/ebrains_metadata_downloader.git
+RUN chmod +x /ebrains_metadata_downloader/hbp_cwl_input_downloader
+ENV PATH="/ebrains_metadata_downloader:${PATH}"
 
 # Install HBP Data Downloader
 # Download Data: code, input and output
-RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_data_downloader.git
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_data_downloader.git
+RUN git clone https://github.com/fbonnier/ebrains_data_downloader.git
 RUN chmod +x /ebrains_data_downloader/hbp_download_data
 ENV PATH="/ebrains_data_downloader:${PATH}"
 
 # Install HBP Script Generator
 # Generates code, inputs, outputs and env
-RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_script_generator.git
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_script_generator.git
+RUN git clone https://github.com/fbonnier/ebrains_script_generator.git
 RUN chmod +x /ebrains_script_generator/script_generator
 ENV PATH="/ebrains_script_generator:${PATH}"
 
 # Install HBP Documentation Checker
 # Verification Method to analyze documentation
-RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_method_documentation.git
-RUN chmod +x /ebrains_method_documentation/documentation_check
-ENV PATH="/ebrains_method_documentation:${PATH}"
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_method_documentation.git
+RUN git clone https://github.com/fbonnier/ebrains_vm_documentation_analysis.git
+RUN chmod +x /ebrains_vm_documentation_analysis/documentation_check
+ENV PATH="/ebrains_vm_documentation_analysis:${PATH}"
 
 # Install HBP Decision Maker
 # Computes final decision/proposition/advices/main score
-RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_decision_maker.git
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_decision_maker.git
+RUN git clone https://github.com/fbonnier/ebrains_decision_maker.git
 RUN chmod +x /ebrains_decision_maker/decision_maker
 ENV PATH="/ebrains_decision_maker:${PATH}"
 
 # Install HBP Watchdog extractor
 # TODO
-RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_extract_watchdog.git
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_extract_watchdog.git
+RUN git clone https://github.com/fbonnier/ebrains_extract_watchdog.git
 RUN chmod +x /ebrains_extract_watchdog/hbp_extract_watchdog
 ENV PATH="/ebrains_extract_watchdog:${PATH}"
 
@@ -134,7 +139,8 @@ ENV PATH="/ebrains_extract_watchdog:${PATH}"
 # Install file-comparison-methods from GIT repo
 # Result comparison
 RUN pip3 install python-Levenshtein
-RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_file_comparison.git
+# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_file_comparison.git
+RUN git clone https://github.com/fbonnier/ebrains_file_comparison.git
 RUN chmod +x /ebrains_file_comparison/file_compare
 ENV PATH="/ebrains_file_comparison:${PATH}"
 
