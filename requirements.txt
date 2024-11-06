@@ -6,6 +6,7 @@ nilsimsa
 argparse
 comment-parser
 brian2
+seaborn
+# cereb-nest
 # pyinterval ## Requires deprecated distutils -- Remove ?
 fooof
-# cereb-nest

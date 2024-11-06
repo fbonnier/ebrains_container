@@ -1,7 +1,8 @@
 spack:
   specs:
-    - nest
+    - pkgconfig
     - cmake
+    - boost
     - hdf5
     - cloc
     - openblas
