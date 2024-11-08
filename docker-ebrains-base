@@ -74,11 +74,6 @@ ENV PKG_CONFIG_PATH="/opt/views/view/lib/pkgconfig:/opt/views/view/share/pkgconf
 # ENV PYTHONPATH="/opt/views/view/lib/python3.11/site-packages"
 ENV PATH="/usr/src/app:$PATH"
 
-# Add additional writable PYTHONPATH
-RUN mkdir /opt/site-packages
-# ENV PYTHONPATH="/opt/site-packages"
-RUN python -m ensurepip --upgrade
-
 # Archiver
 RUN wget -N https://github.com/mholt/archiver/releases/download/v3.5.0/arc_3.5.0_linux_amd64
 RUN chmod a+x arc_*
