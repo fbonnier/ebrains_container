@@ -8,25 +8,9 @@ spack:
     - openblas
     - scalapack
     - wget
-    - py-cython
-    - py-pip
-    - py-numpy@1.20.3
-    - py-matplotlib
-    - py-setuptools
     - git
     - jq
     - gsl
-    - py-neo
-    - neuron
-    - py-fuzzywuzzy
-    - py-argh
-    - py-pyyaml
-    - py-watchdog
-    - py-rarfile
-    - py-python-magic
-    - py-nltk
-    - py-scikit-learn
-    - py-python-levenshtein
   concretizer:
     unify: true
   config:

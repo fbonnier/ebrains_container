@@ -7,6 +7,20 @@ argparse
 comment-parser
 brian2
 seaborn
+cython
+numpy
+matplotlib
+neo
+fuzzywuzzy
+argh
+pyyaml
+watchdog
+rarfile
+python-magic
+nltk
+scikit-learn
+levenshtein
+requests
 # cereb-nest
 # pyinterval ## Requires deprecated distutils -- Remove ?
 fooof
