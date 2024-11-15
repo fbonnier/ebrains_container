@@ -5,6 +5,9 @@ sciunit
 nilsimsa
 argparse
 comment-parser
+brian2
+seaborn
+cython
 numpy
 matplotlib
 neo
@@ -18,4 +21,4 @@ nltk
 scikit-learn
 levenshtein
 requests
-# pyinterval ## Requires deprecated distutils -- Remove ?
+datalad

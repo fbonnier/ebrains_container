@@ -1,3 +1,15 @@
+quantities
+lazyarray
+neo
+uwsgi
+PyNN
+Flask
+Flask-cors
+RestrictedPython
+nest-desktop
+uwsgi
+nestml
+
 hbp-validation-framework
 ebrains-kg-core
 fairgraph
@@ -5,6 +17,9 @@ sciunit
 nilsimsa
 argparse
 comment-parser
+brian2
+seaborn
+cython
 numpy
 matplotlib
 neo
@@ -18,4 +33,8 @@ nltk
 scikit-learn
 levenshtein
 requests
+# cereb-nest
 # pyinterval ## Requires deprecated distutils -- Remove ?
+fooof
+datalad
+h5py

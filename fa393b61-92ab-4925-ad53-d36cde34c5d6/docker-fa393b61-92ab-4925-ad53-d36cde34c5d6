@@ -21,12 +21,14 @@ RUN find -L /opt/views/view/* -type f -exec readlink -f '{}' \; | \
     awk -F: '{print $1}' | xargs strip
 
 # Modifications to the environment that are necessary to run
-# RUN cd /opt/spack-environment && \
-#     spack env activate --sh -d . > activate.sh
+RUN cd /opt/spack-environment && \
+    spack env activate --sh -d . > activate.sh
+
+
 
 
 # ====== Model-Runner ======= #
-FROM ubuntu:jammy AS model-runner
+FROM python:3.8 AS model-runner
 
 
 ENV TZ=Europe/Kiev
@@ -44,18 +46,16 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 
 # Update system and install requirements
-COPY apt_requirements.txt apt_requirements.txt
+COPY apt_requirements_fa393b61-92ab-4925-ad53-d36cde34c5d6.txt apt_requirements.txt
 RUN apt-get -y update && apt-get -y upgrade;
-# apt-get -y install software-properties-common;\
-# add-apt-repository universe;\
-# apt-get -y update;
-RUN xargs apt-get -y install < apt_requirements.txt
+RUN xargs apt-get -y install --no-install-recommends < apt_requirements.txt
+RUN apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* 
 
 # Copy tools from SPACK
-COPY --from=builder --chmod=777 /opt/spack-environment /opt/spack-environment
-COPY --from=builder --chmod=777 /opt/software /opt/software
-COPY --from=builder --chmod=777 /opt/views /opt/views
-
+COPY --from=builder /opt/spack-environment /opt/spack-environment
+COPY --from=builder /opt/software /opt/software
+COPY --from=builder /opt/views /opt/views
 # Simulate Spack Env Activate
 ENV SPACK_ENV="/opt/spack-environment"
 ENV SPACK_ENV_VIEW="default"
@@ -70,7 +70,6 @@ ENV MPIF77="/opt/views/view/bin/mpif77"
 ENV MPIF90="/opt/views/view/bin/mpif90"
 ENV MPIFC="/opt/views/view/bin/mpifort"
 ENV PATH="/opt/views/view/bin:/opt/spack/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-# ENV PYTHONPATH="/opt/views/view/lib/python3.11/site-packages"
 ENV PATH="/usr/src/app:$PATH"
 
 # Archiver
@@ -80,13 +79,8 @@ RUN mkdir -p /usr/local/bin
 RUN mv arc_* /usr/local/bin/arc
 
 # Set Python Virtual Environment
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Datalad EBRAINS Extension
-# RUN pip install git+https://github.com/datalad/datalad-ebrains.git
-RUN pip install datalad
+COPY requirements_fa393b61-92ab-4925-ad53-d36cde34c5d6.txt requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # Install EBRAINS Metadata Downloader
 # Download Metadata
