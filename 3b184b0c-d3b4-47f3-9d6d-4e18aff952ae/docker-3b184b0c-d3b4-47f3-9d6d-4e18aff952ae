@@ -12,17 +12,9 @@ SHELL ["/bin/bash", "-c"]
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# ARG GITLAB_DEPLOYED_USR
-# ARG GITLAB_DEPLOYED_PASSWORD
-
-# ENV PYTHONPATH="/root/.local/lib/python3.8/site-packages:$PYTHONPATH"
-
 # Update system and install requirements
 COPY apt_requirements_3b184b0c-d3b4-47f3-9d6d-4e18aff952ae.txt apt_requirements.txt
 RUN apt-get -y update && apt-get -y upgrade;
-# apt-get -y install software-properties-common;\
-# add-apt-repository universe;\
-# apt-get -y update;
 RUN xargs apt-get -y install --no-install-recommends < apt_requirements.txt
 RUN apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* 
@@ -58,93 +50,15 @@ ENV PATH=$NEST_INSTALL_DIR/bin:$PATH
 # Simulate Spack Env Activate
 ENV PATH="/usr/src/app:$PATH"
 
-# Archiver
-RUN wget -N https://github.com/mholt/archiver/releases/download/v3.5.0/arc_3.5.0_linux_amd64
-RUN chmod a+x arc_*
-RUN mkdir -p /usr/local/bin
-RUN mv arc_* /usr/local/bin/arc
-
 # Set Python Virtual Environment
 COPY requirements_3b184b0c-d3b4-47f3-9d6d-4e18aff952ae.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel mock importlib_metadata packaging ordered-set more_itertools jaraco.text importlib_resources tomli platformdirs
 RUN pip install --no-cache-dir -r requirements.txt
 
-
-# # Install music
-# RUN wget https://github.com/INCF/MUSIC/archive/master.tar.gz && \
-# 	tar zxf master.tar.gz && \
-# 	mkdir music-build music-install && \
-# 	cd MUSIC-master && \
-# 	sh ./autogen.sh && \
-# 	cd ../music-build && \
-# 	../MUSIC-master/configure --prefix=/opt/music-install && \
-# 	make && \
-# 	make install
-
-# # Install cereb-nest extension
+# Install cereb-nest extension
 RUN git clone https://github.com/dbbs-lab/cereb-nest/
 RUN cd cereb-nest; checkout nest2.20.2_python3.8; mkdir build; cd build; cmake -Dwith-nest=${NEST_INSTALL_DIR}/bin/nest-config ..; make; make install;
 
-# RUN wget https://zenodo.org/records/10970203/files/cereb-nest-nest2.20.2_python3.8.zip
-# RUN unzip cereb-nest-nest2.20.2_python3.8.zip
-# RUN mkdir cereb-nest-build && \
-#     cd cereb-nest-build &&\
-#     cmake -Dwith-nest=${NEST_INSTALL_DIR}/bin/nest-config ../cereb-nest-nest2.20.2_python3.8 &&\
-#     make &&\
-#     make install
-
-
-# # Install bgmodel
+# Install bgmodel
 RUN git clone https://github.com/marcobiasizzo/bgmodel
 RUN cd bgmodel; ./install-module-2.20.2.sh $NEST_INSTALL_DIR
-
-
-# Install EBRAINS Metadata Downloader
-# Download Metadata
-# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_download_metadata.git
-RUN git clone https://github.com/fbonnier/ebrains_metadata_downloader.git
-RUN chmod +x /ebrains_metadata_downloader/hbp_cwl_input_downloader
-ENV PATH="/ebrains_metadata_downloader:${PATH}"
-
-# Install HBP Data Downloader
-# Download Data: code, input and output
-# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_data_downloader.git
-RUN git clone https://github.com/fbonnier/ebrains_data_downloader.git
-RUN chmod +x /ebrains_data_downloader/hbp_download_data
-ENV PATH="/ebrains_data_downloader:${PATH}"
-
-# Install HBP Script Generator
-# Generates code, inputs, outputs and env
-# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_script_generator.git
-RUN git clone https://github.com/fbonnier/ebrains_script_generator.git
-RUN chmod +x /ebrains_script_generator/script_generator
-ENV PATH="/ebrains_script_generator:${PATH}"
-
-# Install HBP Documentation Checker
-# Verification Method to analyze documentation
-# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_method_documentation.git
-RUN git clone https://github.com/fbonnier/ebrains_vm_documentation_analysis.git
-RUN chmod +x /ebrains_vm_documentation_analysis/documentation_check
-ENV PATH="/ebrains_vm_documentation_analysis:${PATH}"
-
-# Install HBP Decision Maker
-# Computes final decision/proposition/advices/main score
-# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_decision_maker.git
-RUN git clone https://github.com/fbonnier/ebrains_decision_maker.git
-RUN chmod +x /ebrains_decision_maker/decision_maker
-ENV PATH="/ebrains_decision_maker:${PATH}"
-
-# Install HBP Watchdog extractor
-# TODO
-# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_extract_watchdog.git
-RUN git clone https://github.com/fbonnier/ebrains_extract_watchdog.git
-RUN chmod +x /ebrains_extract_watchdog/hbp_extract_watchdog
-ENV PATH="/ebrains_extract_watchdog:${PATH}"
-
-
-# Install file-comparison-methods from GIT repo
-# Result comparison
-# RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_file_comparison.git
-RUN git clone https://github.com/fbonnier/ebrains_file_comparison.git
-RUN chmod +x /ebrains_file_comparison/file_compare
-ENV PATH="/ebrains_file_comparison:${PATH}"

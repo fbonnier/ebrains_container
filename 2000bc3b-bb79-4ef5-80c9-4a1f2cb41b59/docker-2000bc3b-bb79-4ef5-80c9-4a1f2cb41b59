@@ -1,0 +1,28 @@
+# ====== Model-Runner ======= #
+FROM python:3.6 AS model-runner
+
+
+ENV TZ=Europe/Kiev
+
+EXPOSE 667
+
+# Set default shell
+SHELL ["/bin/bash", "-c"]
+
+# Set timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Update system and install requirements
+COPY apt_requirements_2000bc3b-bb79-4ef5-80c9-4a1f2cb41b59.txt apt_requirements.txt
+RUN apt-get -y update && apt-get -y upgrade;
+RUN xargs apt-get -y install --no-install-recommends < apt_requirements.txt
+RUN apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* 
+
+# Simulate Spack Env Activate
+ENV PATH="/usr/src/app:$PATH"
+
+# Set Python Virtual Environment
+COPY requirements_2000bc3b-bb79-4ef5-80c9-4a1f2cb41b59.txt requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel mock importlib_metadata packaging ordered-set more_itertools jaraco.text importlib_resources tomli platformdirs
+RUN pip install --no-cache-dir -r requirements.txt
