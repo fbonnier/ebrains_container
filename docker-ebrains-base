@@ -88,6 +88,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # RUN pip install git+https://github.com/datalad/datalad-ebrains.git
 RUN pip install datalad
 
+ARG CACHE_DATE=bye-bye-bye
+
 # Install EBRAINS Metadata Downloader
 # Download Metadata
 # RUN git clone https://${GITLAB_DEPLOYED_USR}:${GITLAB_DEPLOYED_PASSWORD}@gitlab.ebrains.eu/model-verification/ebrains_download_metadata.git
