@@ -4,3 +4,12 @@ python3
 python3-venv
 python3-pip
 python3-magic
+
+# No ESD
+boost
+cloc
+# libopenblas
+# libscalapack
+wget
+git
+jq
