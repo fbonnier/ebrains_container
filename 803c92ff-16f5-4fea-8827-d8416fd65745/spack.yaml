@@ -1,0 +1,14 @@
+spack:
+  specs:
+    - boost
+    - cloc
+    - openblas
+    - scalapack
+    - wget
+    - git
+    - jq
+  concretizer:
+    unify: true
+  config:
+    install_tree: /opt/software
+  view: /opt/views/view
