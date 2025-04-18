@@ -5,11 +5,9 @@ python3-venv
 python3-pip
 python3-magic
 
-# No ESD
-boost
+
+libboost-all-dev
 cloc
-# libopenblas
-# libscalapack
 wget
 git
 jq
