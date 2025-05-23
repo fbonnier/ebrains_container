@@ -38,13 +38,16 @@ RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r re
 # RUN cd /SpiNNCer && pip install --no-cache-dir --ignore-installed -e .
 # ENV PYTHONPATH="/SpiNNCer/spinncer"
 
+RUN chmod --recursive 777 /nest_dev
 
 RUN { \
       echo '#!/bin/sh' \
       && echo '. /nest_dev/bin/nest_vars.sh' \
+      # && echo chmod --recursive 777 /nest_dev/SpiNNCer-master\
       && echo 'exec "$@"'; \
     } > /entrypoint.sh \
 && chmod a+x /entrypoint.sh
+
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "/bin/bash" ]
