@@ -38,6 +38,30 @@ RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r re
 # RUN cd /SpiNNCer && pip install --no-cache-dir --ignore-installed -e .
 # ENV PYTHONPATH="/SpiNNCer/spinncer"
 
+###### Simulate nest_vars.sh
+
+# NEST is installed here. When you relocate NEST, change this variable.
+ENV NEST_INSTALL_DIR=/nest_dev
+
+# NEST finds standard *.sli files $NEST_DATA_DIR/sli
+ENV NEST_DATA_DIR=/nest_dev/share/nest
+
+# NEST finds help files $NEST_DOC_DIR/help
+ENV NEST_DOC_DIR=/nest_dev/share/doc/nest
+
+# The path where NEST looks for user modules.
+ENV NEST_MODULE_PATH=/nest_dev/lib/nest
+
+# The path where the PyNEST bindings are installed.
+ENV NEST_PYTHON_PREFIX=/nest_dev/lib/python3.7/site-packages
+
+# Prepend NEST to PYTHONPATH in a safe way even if PYTHONPATH is undefined
+ENV PYTHONPATH="$NEST_PYTHON_PREFIX${PYTHONPATH:+:$PYTHONPATH}"
+
+# Make nest / sli /... executables visible.
+ENV PATH=$NEST_INSTALL_DIR/bin:$PATH
+
+
 RUN chmod --recursive 777 /nest_dev
 
 RUN { \
