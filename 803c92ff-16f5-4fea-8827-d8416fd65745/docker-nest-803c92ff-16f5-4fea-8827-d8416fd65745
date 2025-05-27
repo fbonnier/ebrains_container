@@ -13,7 +13,7 @@ SHELL ["/bin/bash", "-c"]
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-USER root
+# USER root
 # ARG GITLAB_DEPLOYED_USR
 # ARG GITLAB_DEPLOYED_PASSWORD
 
@@ -61,17 +61,17 @@ ENV PYTHONPATH="$NEST_PYTHON_PREFIX${PYTHONPATH:+:$PYTHONPATH}"
 # Make nest / sli /... executables visible.
 ENV PATH=$NEST_INSTALL_DIR/bin:$PATH
 
-
-RUN chmod --recursive 777 /nest_dev
+# RUN chmod --recursive 777 /nest_dev
 
 RUN { \
       echo '#!/bin/sh' \
       && echo '. /nest_dev/bin/nest_vars.sh' \
-      # && echo chmod --recursive 777 /nest_dev/SpiNNCer-master\
+      # && echo chmod --recursive 777 /nest_dev\
       && echo 'exec "$@"'; \
     } > /entrypoint.sh \
 && chmod a+x /entrypoint.sh
 
+WORKDIR /tmp
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "/entrypoint.sh" ]
