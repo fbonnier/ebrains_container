@@ -27,7 +27,7 @@ RUN cd /opt/spack-environment && spack repo add /opt/ebrains-spack-builds && spa
 
 
 # ====== Model-Runner ======= #
-FROM ubuntu:jammy AS model-runner
+FROM ubuntu:20.04 AS model-runner
 
 
 ENV TZ=Europe/Kiev
