@@ -1,6 +1,6 @@
 # versions to verify spinncer model
 numpy==1.19.0
-neo==0.9
+neo==0.7.1
 
 ebrains-validation-framework
 hbp-validation-framework
