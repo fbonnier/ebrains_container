@@ -1,5 +1,5 @@
 # ====== Model-Runner ======= #
-FROM ubuntu:jammy AS model-runner
+FROM ubuntu:20.04 AS model-runner
 
 ENV TZ=Europe/Kiev
 
@@ -33,7 +33,7 @@ RUN mkdir -p /usr/local/bin
 RUN mv arc_* /usr/local/bin/arc
 
 # Set Python Virtual Environment
-COPY requirements.txt requirements.txt
+COPY requirements-neo-0.7.1.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
