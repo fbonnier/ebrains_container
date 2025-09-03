@@ -1,0 +1,15 @@
+spack:
+  specs:
+    - boost
+    - cloc
+    - openblas
+    - scalapack
+    - wget
+    - git
+    - jq
+    - neuron@7.4
+  concretizer:
+    unify: true
+  config:
+    install_tree: /opt/software
+  view: /opt/views/view
