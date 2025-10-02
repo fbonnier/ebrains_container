@@ -1,34 +1,5 @@
-# ====== SPACK ======= #
-# Build stage with Spack pre-installed and ready to be used
-FROM spack/ubuntu-jammy:develop AS builder
-
-# What we want to install and how we want to install it
-# is specified in a manifest file (spack.yaml)
-COPY ./spack.yaml /opt/spack-environment/spack.yaml
-
-# Get the additional EBRAINS package definitions
-# TODO: here we get the main branch, we may wish to use a release tag
-RUN git clone https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds.git /opt/ebrains-spack-builds
-
-# Install the software, remove unnecessary deps
-RUN cd /opt/spack-environment && spack repo add /opt/ebrains-spack-builds && spack env activate . && spack install --fail-fast && spack gc -y
-
-# Strip all the binaries
-RUN find -L /opt/views/view/* -type f -exec readlink -f '{}' \; | \
-    xargs file -i | \
-    grep 'charset=binary' | \
-    grep 'x-executable\|x-archive\|x-sharedlib' | \
-    awk -F: '{print $1}' | xargs strip
-
-# Modifications to the environment that are necessary to run
-RUN cd /opt/spack-environment && \
-    spack env activate --sh -d . > activate.sh
-
-
-
-
 # ====== Model-Runner ======= #
-FROM python:3.8 AS model-runner
+FROM ubuntu:20.04 AS model-runner
 
 
 ENV TZ=Europe/Kiev
@@ -41,37 +12,28 @@ SHELL ["/bin/bash", "-c"]
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# ARG GITLAB_DEPLOYED_USR
-# ARG GITLAB_DEPLOYED_PASSWORD
-
-
 # Update system and install requirements
 COPY apt_requirements_469e4b78-8b3b-459d-88b6-c9ad10ee11ea.txt apt_requirements.txt
 RUN apt-get -y update && apt-get -y upgrade;
 RUN xargs apt-get -y install --no-install-recommends < apt_requirements.txt
+
+# Install NEURON 7.4
+# RUN wget -N --no-check-certificate https://www.neuron.yale.edu/ftp/neuron/versions/v7.4/nrn-7.4.x86_64.deb
+# RUN apt-get install -y ./nrn-7.4.x86_64.deb
+# RUN apt-get -y install -f
+
 RUN apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* 
 
-# Copy tools from SPACK
-COPY --from=builder /opt/spack-environment /opt/spack-environment
-COPY --from=builder /opt/software /opt/software
-COPY --from=builder /opt/views /opt/views
-# Simulate Spack Env Activate
-ENV SPACK_ENV="/opt/spack-environment"
-ENV SPACK_ENV_VIEW="default"
-ENV ACLOCAL_PATH="/opt/views/view/share/aclocal"
-ENV CMAKE_PREFIX_PATH="/opt/views/view"
-ENV GSL_ROOT_DIR="/opt/views/view"
-ENV LD_LIBRARY_PATH="/opt/views/view/lib"
-ENV MANPATH="/opt/views/view/share/man:/opt/views/view/man:/usr/share/man"
-ENV MPICC="/opt/views/view/bin/mpicc"
-ENV MPICXX="/opt/views/view/bin/mpic++"
-ENV MPIF77="/opt/views/view/bin/mpif77"
-ENV MPIF90="/opt/views/view/bin/mpif90"
-ENV MPIFC="/opt/views/view/bin/mpifort"
-ENV PATH="/opt/views/view/bin:/opt/spack/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-ENV PATH="/usr/src/app:$PATH"
 
 # Set Python Virtual Environment
+# RUN python3 -m ensurepip --upgrade
 COPY requirements_469e4b78-8b3b-459d-88b6-c9ad10ee11ea.txt requirements.txt
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+
+# Install model
+RUN wget -N https://data-proxy.ebrains.eu/api/v1/buckets/pc0a33-human_cells/cell0603_11_model_937.zip
+RUN unzip cell0603_11_model_937.zip
+

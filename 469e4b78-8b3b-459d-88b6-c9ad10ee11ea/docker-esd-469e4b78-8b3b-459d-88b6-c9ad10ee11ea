@@ -46,7 +46,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 
 # Update system and install requirements
-COPY apt_requirements_fa393b61-92ab-4925-ad53-d36cde34c5d6.txt apt_requirements.txt
+COPY apt_requirements_469e4b78-8b3b-459d-88b6-c9ad10ee11ea.txt apt_requirements.txt
 RUN apt-get -y update && apt-get -y upgrade;
 RUN xargs apt-get -y install --no-install-recommends < apt_requirements.txt
 RUN apt-get autoremove -y && \
@@ -73,13 +73,5 @@ ENV PATH="/opt/views/view/bin:/opt/spack/bin:/usr/local/sbin:/usr/local/bin:/usr
 ENV PATH="/usr/src/app:$PATH"
 
 # Set Python Virtual Environment
-COPY requirements_fa393b61-92ab-4925-ad53-d36cde34c5d6.txt requirements.txt
+COPY requirements_469e4b78-8b3b-459d-88b6-c9ad10ee11ea.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
-
-WORKDIR /tmp
-# Install model
-RUN wget -N http://modeldb.science/eavBinDown?o=263259 -O /tmp/model.zip && \
-    cd /tmp && unzip -q model.zip && \
-    rm model.zip
-ENV PYTHONPATH=/tmp/model/263259/HH_project/:/tmp/model/263259/HH_project/single_cell_models/:$PYTHONPATH
-RUN pip install matplotlib numpy==1.23.0;

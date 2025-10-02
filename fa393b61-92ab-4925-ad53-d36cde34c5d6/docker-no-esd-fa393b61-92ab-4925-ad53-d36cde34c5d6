@@ -1,0 +1,36 @@
+# ====== Model-Runner ======= #
+FROM python:3.8 AS model-runner
+
+
+ENV TZ=Europe/Kiev
+
+EXPOSE 667
+
+# Set default shell
+SHELL ["/bin/bash", "-c"]
+
+# Set timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# ARG GITLAB_DEPLOYED_USR
+# ARG GITLAB_DEPLOYED_PASSWORD
+
+
+# Update system and install requirements
+COPY apt_requirements_fa393b61-92ab-4925-ad53-d36cde34c5d6.txt apt_requirements.txt
+RUN apt-get -y update && apt-get -y upgrade;
+RUN xargs apt-get -y install --no-install-recommends < apt_requirements.txt
+RUN apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* 
+
+# Set Python Virtual Environment
+COPY requirements_fa393b61-92ab-4925-ad53-d36cde34c5d6.txt requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
+WORKDIR /tmp
+# Install model
+RUN wget -N http://modeldb.science/eavBinDown?o=263259 -O /tmp/model.zip && \
+    cd /tmp && unzip -q model.zip && \
+    rm model.zip
+ENV PYTHONPATH=/tmp/HH_project/:/tmp/HH_project/single_cell_models/:$PYTHONPATH
+RUN pip install matplotlib numpy==1.23.0;
